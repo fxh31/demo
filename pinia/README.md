@@ -47,6 +47,8 @@ pinia demo。
 
 ### state
 
+state 被定义为一个返回初始状态的函数。
+
 #### 访问
 
 默认情况下，你可以通过 store 实例访问 state，直接对其进行读写。并且通过这种方式是响应式的。
@@ -119,3 +121,100 @@ watch(
   { deep: true },
 )
 ```
+
+### getter
+
+等同于 store 的 state 的计算值。它是一个函数，接收 state 作为第一个参数，返回计算值。
+
+- 大多数时候 getter 依赖 state，但也可能会使用其他 getter，可**以通过 this 访问到整个 store 实例**。但在 _ts 中必须定义返回类型_。
+
+#### 访问本地
+
+同 state。
+
+#### 访问其他 getter
+
+通过`this`访问到整个 store 实例，然后使用`this.xxx`即可。
+
+> **注意**：需要为这个 getter 指定一个返回值的类型。
+
+#### 向 getter 传参
+
+不可传参，但是可从 getter 中返回一个函数，该函数可以接受任意参数。但这样 getter 就不会再被缓存，只是作为普通的有调用值的函数。
+
+#### 访问其他 store 的 getter
+
+直接引入其他的 store 进行访问即可。
+
+### action
+
+相当于组件中的 method，是定义业务逻辑的完美选择。
+
+它与 getter 的用法大部分是相同的，但不同的是：
+
+- 它可以是**异步的**。
+- 可以使用 this 访问 state。
+  > getter 中 this 和 state 都可以访问，此处同 getter 中的 this。this 具备完整的类型推导。
+- 可以任意传参，因为它本来就是作为普通函数。
+  > action 一切类型都可以被推导出来。
+
+#### 访问其他 store 的 action
+
+直接引入其他的 store 进行访问即可。
+
+#### 订阅 action
+
+可以通过 `store.$onAction()` 来监听 action 和它们的结果。
+
+```js
+const unsubscribe = someStore.$onAction(
+  ({
+    name, // action 名称
+    store, // store 实例，类似 `someStore`
+    args, // 传递给 action 的参数数组
+    after, // 在 action 返回或解决后的钩子
+    onError, // action 抛出或拒绝的钩子
+  }) => {
+    // 为这个特定的 action 调用提供一个共享变量
+    const startTime = Date.now()
+    // 这将在执行 "store "的 action 之前触发。
+    console.log(`Start "${name}" with params [${args.join(', ')}].`)
+
+    // 这将在 action 成功并完全运行后触发。
+    // 它等待着任何返回的 promise
+    after(result => {
+      console.log(
+        `Finished "${name}" after ${
+          Date.now() - startTime
+        }ms.\nResult: ${result}.`,
+      )
+    })
+
+    // 如果 action 抛出或返回一个拒绝的 promise，这将触发
+    onError(error => {
+      console.warn(
+        `Failed "${name}" after ${Date.now() - startTime}ms.\nError: ${error}.`,
+      )
+    })
+  },
+)
+
+// 手动删除监听器
+unsubscribe()
+```
+
+> 默认情况下，action 订阅器会被绑定到添加它们的组件上(如果 store 在组件的 `setup()` 内)。这意味着，当该组件被卸载时，它们将被自动删除。如果你想在组件卸载后依旧保留它们，请将 true 作为第二个参数传递给 action 订阅器。
+
+### 插件
+
+pinia 支持类似`Vue.use`的插件，该插件要在创建 store 实例之前注册进去才会生效。
+`use`接收一个函数，该函数内部默认传参有：
+
+- store 实例被 reactive 包装过，可自动解包。
+- 由于插件里配置的 state 是在 store 实例化之前添加的，所以：
+  - 它不会触发任何订阅函数；
+  - 默认情况下`$reset`不会重置插件添加的 state，但是我们自己可以重写；
+- 添加外部属性、第三方库的类实例或非响应式的简单值时，你应该先用`markRaw()`来包装一下它，再将它传给 pinia。
+- 可在插件中使用 store.$subscribe 和 store.$onAction。
+- 定义 store 时可以添加新的选项（除了 getter、action。state等以外）（此处示例为debouce）
+- 在 store 中添加新的属性时，你也应该扩展 PiniaCustomProperties 接口。

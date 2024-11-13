@@ -1,5 +1,5 @@
 <script lang="ts">
-import { mapState, mapWritableState } from 'pinia'
+import { mapState, mapWritableState, mapActions } from 'pinia'
 import { useCounterStore } from '@/store/modules/option/counter'
 
 export default {
@@ -21,6 +21,7 @@ export default {
     resetCount() {
       this.count = 0
     },
+    ...mapActions(useCounterStore, ['increment']),
   },
   computed: {
     // ...mapState(useCounterStore, ['count']), // 同 countStore.count

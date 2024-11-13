@@ -1,11 +1,16 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCounterStore } from '@/store/modules/option/counter'
+import { useUserStore } from '@/store/modules/option/user'
 const countStore = useCounterStore()
+const userStore = useUserStore()
 
 const { name, count } = storeToRefs(countStore)
 // 作为 action 的 increment 可以直接解构
 const { increment } = countStore
+
+const { getUserById } = userStore
 
 const handleClick = () => {
   // increment()
@@ -30,10 +35,17 @@ const handleClickUpdate = () => {
 countStore.$subscribe(
   (mutation, state) => {
     console.log(mutation, state)
-    console.log(88)
   },
   { detached: true },
 )
+// 重写后 $reset
+countStore.test = 99
+console.log(countStore.test)
+countStore.$reset()
+console.log(countStore.test)
+
+// 被包装过（markRaw）的值
+console.log(countStore.fooName)
 </script>
 
 <template>
@@ -41,7 +53,7 @@ countStore.$subscribe(
     <header>
       <h2>Vue3 Option playground</h2>
     </header>
-    <div>
+    <div class="content">
       <section class="btn">
         <button @click="handleClick">add</button>
         <button @click="handleClickReset">reset</button>
@@ -50,7 +62,12 @@ countStore.$subscribe(
       <section>
         <p>name: {{ name }}</p>
         <p>count: {{ count }}</p>
+        <p>double count: {{ countStore.doublePlusOne }}</p>
+        <p>double count2: {{ countStore.doubleCount2 }}</p>
       </section>
+      <!-- <section>{{ userStore.getUserById(2) }}</section> -->
+      <section>{{ getUserById(2) }}</section>
+      <section>{{ userStore.getCounterStore }}</section>
     </div>
   </div>
 </template>
@@ -58,5 +75,9 @@ countStore.$subscribe(
 .btn {
   display: flex;
   gap: 20px;
+}
+.content {
+  display: flex;
+  flex-direction: column;
 }
 </style>

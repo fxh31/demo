@@ -2,6 +2,7 @@
 import OptionView from './components/OptionView.vue'
 import SetupView from './components/SetupView.vue'
 import Vue2View from './components/Vue2View.vue'
+import Vue2SetupView from './components/Vue2SetupView.vue'
 </script>
 
 <template>
@@ -10,6 +11,7 @@ import Vue2View from './components/Vue2View.vue'
       <OptionView />
       <SetupView />
       <!-- <Vue2View /> -->
+      <Vue2SetupView />
     </div>
   </div>
 </template>
